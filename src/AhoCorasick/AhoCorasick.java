@@ -21,23 +21,29 @@ public final class AhoCorasick<T> implements ITrieInsert<T> {
       this.root.parent = entry(' ', this.root);
       this.isLocked = false;
    }
-   
+
    private static class Node<T> {
+      private static short indexCounter = 0;
+
+      private final short index;
       private T value;
-      private boolean hasComputedDictionary;
       private Entry<Character, Node<T>> parent;
-      private Node<T> failureLink;
-      private Node<T> dictionaryLink;
       private final HashMap<Character, Node<T>> children;
+
+      private Node<T> failureLink;
+      private boolean hasComputedDictionary;
+      private Node<T> dictionaryLink;
       private final HashMap<Character, Node<T>> transitions;
 
       private Node() {
+         this.index = ++indexCounter;
          this.value = null;
-         this.hasComputedDictionary = false;
          this.parent = null;
-         this.failureLink = null;
-         this.dictionaryLink = null;
          this.children = new HashMap<>();
+
+         this.failureLink = null;
+         this.hasComputedDictionary = false;
+         this.dictionaryLink = null;
          this.transitions = new HashMap<>();
       }
 
@@ -45,6 +51,23 @@ public final class AhoCorasick<T> implements ITrieInsert<T> {
          this.children.put(token, childNode);
          childNode.parent = entry(token, this);
          return childNode;
+      }
+
+      private void print() {
+         System.out.println("Index :\t" + this.index);
+         System.out.println("Value :\t" + this.value);
+         System.out.println("Print :\t ('" + this.parent.getKey() + "', " + this.parent.getValue().index + ")");
+         System.out.println("Children :");
+         this.children.forEach((key, value) -> {
+            System.out.println("\t" + key + " : " + value.index);
+         });
+
+         System.out.println("Failure Link :\t" + this.failureLink.index);
+         System.out.println("Dictionary Link :\t" + (this.dictionaryLink == null ? null : this.dictionaryLink.index));
+         System.out.println("Transitions :");
+         this.transitions.forEach((key, value) -> {
+            System.out.println("\t" + key + " : " + value.index);
+         });
       }
    }
 
@@ -119,11 +142,8 @@ public final class AhoCorasick<T> implements ITrieInsert<T> {
       if (node.hasComputedDictionary == false) {
          node.hasComputedDictionary = true;
          Node<T> failureNode = this.getFailureLink(node);
-         node.dictionaryLink = failureNode.value != null 
-            ? failureNode
-            : failureNode == this.root 
-               ? null
-               : this.getDictionaryLink(failureNode);
+         node.dictionaryLink = failureNode.value != null ? failureNode
+               : failureNode == this.root ? null : this.getDictionaryLink(failureNode);
       }
       return node.dictionaryLink;
    }
@@ -131,9 +151,8 @@ public final class AhoCorasick<T> implements ITrieInsert<T> {
    private Node<T> getFailureLink(Node<T> node) {
       if (node.failureLink == null) {
          Node<T> parentNode = node.parent.getValue();
-         node.failureLink = parentNode == this.root
-            ? this.root
-            : this.getTransition(this.getFailureLink(parentNode), node.parent.getKey());
+         node.failureLink = parentNode == this.root ? this.root
+               : this.getTransition(this.getFailureLink(parentNode), node.parent.getKey());
       }
       return node.failureLink;
    }
@@ -141,12 +160,8 @@ public final class AhoCorasick<T> implements ITrieInsert<T> {
    private Node<T> getTransition(Node<T> node, Character token) {
       if (node.transitions.get(token) == null) {
          Node<T> childNode = node.children.get(token);
-         node.transitions.put(
-            token, 
-            childNode != null ? childNode : node == this.root 
-               ? this.root 
-               : this.getTransition(this.getFailureLink(node), token)
-         );
+         node.transitions.put(token, childNode != null ? childNode
+               : node == this.root ? this.root : this.getTransition(this.getFailureLink(node), token));
       }
       return node.transitions.get(token);
    }
@@ -183,5 +198,17 @@ public final class AhoCorasick<T> implements ITrieInsert<T> {
          }
       }
       return containedValues;
+   }
+
+   public void print() {
+      LinkedList<Node<T>> nodeQueue = new LinkedList<>();
+      nodeQueue.addFirst(this.root);
+
+      while (nodeQueue.size() > 0) {
+         Node<T> currentNode = nodeQueue.removeFirst();
+         currentNode.children.forEach((__, node) -> nodeQueue.addLast(node));
+         currentNode.print();
+         System.out.println();
+      }
    }
 }
