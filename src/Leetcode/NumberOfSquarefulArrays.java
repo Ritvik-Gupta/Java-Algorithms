@@ -1,98 +1,66 @@
 package src.Leetcode;
 
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 
 public class NumberOfSquarefulArrays {
-    public static void main(String[] args) {
-        ArrayList<ArrayList<Integer>> graph = new ArrayList<>();
-
-
-        graph.add(new ArrayList<>());
-        graph.add(new ArrayList<>());
-        graph.add(new ArrayList<>());
-        graph.add(new ArrayList<>());
-        graph.add(new ArrayList<>());
-
-        graph.get(0).add(2);
-        graph.get(2).add(0);
-
-        graph.get(2).add(1);
-        graph.get(1).add(2);
-        
-        graph.get(3).add(1);
-        graph.get(1).add(3);
-        
-        graph.get(4).add(1);
-        graph.get(1).add(4);
-        
-        graph.get(4).add(3);
-        graph.get(3).add(4);
-
-        System.out.println(graph);
-
-
-        // graph.add(new ArrayList<>());
-        // graph.add(new ArrayList<>());
-        // graph.add(new ArrayList<>());
-        // graph.add(new ArrayList<>());
-
-        // graph.get(1).add(0);
-        // graph.get(2).add(0);
-        // graph.get(1).add(2);
-        // graph.get(2).add(1);
-        // graph.get(3).add(1);
-        // graph.get(3).add(2);
-
-        System.out.println(Solution.countHamiltonianPaths(graph));
-    }
 }
 
 class Solution {
+    private static class SquarefulElm {
+        int frequency = 1;
+        HashSet<Integer> links = new HashSet<>();
+    }
+
+    private boolean isSquareful(int num) {
+        int sqrt = (int) Math.sqrt(num);
+        return sqrt * sqrt == num;
+    }
+
+    private int dfsToFindHamiltonianPaths(
+            HashMap<Integer, SquarefulElm> squareElmRecord,
+            int elm,
+            int numNodesToTraverse) {
+        if (numNodesToTraverse == 0)
+            return 1;
+
+        int totalPaths = 0;
+        for (int linkedElm : squareElmRecord.get(elm).links) {
+            if (squareElmRecord.get(linkedElm).frequency != 0) {
+                squareElmRecord.get(linkedElm).frequency--;
+                totalPaths += dfsToFindHamiltonianPaths(squareElmRecord, linkedElm, numNodesToTraverse - 1);
+                squareElmRecord.get(linkedElm).frequency++;
+            }
+        }
+        return totalPaths;
+    }
+
     public int numSquarefulPerms(int[] nums) {
-        ArrayList<ArrayList<Integer>> graph = new ArrayList<>();
-        for (int i = 0; i < nums.length; ++i)
-            graph.add(new ArrayList<>());
+        HashMap<Integer, SquarefulElm> squareElmRecord = new HashMap<>();
+
+        for (int i = 0; i < nums.length; ++i) {
+            SquarefulElm record = squareElmRecord.get(nums[i]);
+            if (record != null)
+                record.frequency++;
+            else
+                squareElmRecord.put(nums[i], new SquarefulElm());
+        }
 
         for (int i = 0; i < nums.length; ++i) {
             for (int j = i + 1; j < nums.length; ++j) {
-                double sqrtSum = Math.sqrt((double) nums[i] + (double) nums[j]);
-                if (Math.floor(sqrtSum) == Math.ceil(sqrtSum)) {
-                    graph.get(i).add(j);
-                    graph.get(j).add(i);
+                if (isSquareful(nums[i] + nums[j])) {
+                    squareElmRecord.get(nums[i]).links.add(nums[j]);
+                    squareElmRecord.get(nums[j]).links.add(nums[i]);
                 }
             }
         }
 
-        return countHamiltonianPaths(graph);
-    }
-
-    public static int countHamiltonianPaths(ArrayList<ArrayList<Integer>> graph) {
-        int N = graph.size();
-
-        int[][] dp = new int[N][1 << N];
-        dp[0][1] = 1;
-
-        for (int i = 2; i < (1 << N); ++i) {
-            if ((i & (1 << 0)) == 0)
-                continue;
-
-            if ((i & (1 << (N - 1))) != 0 && i != ((1 << N) - 1))
-                continue;
-
-            for (int end = 0; end < N; ++end) {
-                if ((i & (1 << end)) == 0)
-                    continue;
-
-                int prev = i - (1 << end);
-
-                for (int it : graph.get(end)) {
-                    if ((i & (1 << it)) != 0)
-                        dp[end][i] += dp[it][prev];
-                }
-            }
+        int totalPaths = 0;
+        for (int key : squareElmRecord.keySet()) {
+            squareElmRecord.get(key).frequency--;
+            totalPaths += dfsToFindHamiltonianPaths(squareElmRecord, key, nums.length - 1);
+            squareElmRecord.get(key).frequency++;
         }
-
-        return dp[N - 1][(1 << N) - 1];
+        return totalPaths;
     }
 }
-
