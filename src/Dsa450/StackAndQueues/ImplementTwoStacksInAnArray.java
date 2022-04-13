@@ -1,5 +1,5 @@
 
-package src.Dsa450.Stack;
+package src.Dsa450.StackAndQueues;
 
 public class ImplementTwoStacksInAnArray {
 }
