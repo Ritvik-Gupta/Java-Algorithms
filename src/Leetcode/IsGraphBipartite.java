@@ -20,12 +20,13 @@ class Graph {
         nodeColor = new Color[adjacencyList.length];
     }
 
-    boolean dfsThroughBipartition(int nodeIdx, Color color) {
+    boolean dfsBipartition(int nodeIdx, Color color) {
         nodeColor[nodeIdx] = color;
         for (int linkIdx : adjacencyList[nodeIdx])
-            if (nodeColor[linkIdx] == nodeColor[nodeIdx])
-                return false;
-            else if (nodeColor[linkIdx] == null && !dfsThroughBipartition(linkIdx, color.flip()))
+            if (
+                (nodeColor[linkIdx] == null && !dfsBipartition(linkIdx, color.flip()))
+                || nodeColor[linkIdx] == nodeColor[nodeIdx]
+            )
                 return false;
         return true;
     }
@@ -35,7 +36,7 @@ class Solution {
     public boolean isBipartite(int[][] adjacencyList) {
         Graph graph = new Graph(adjacencyList);
         for (int i = 0; i < adjacencyList.length; ++i)
-            if (graph.nodeColor[i] == null && !graph.dfsThroughBipartition(i, Color.BLUE))
+            if (graph.nodeColor[i] == null && !graph.dfsBipartition(i, Color.BLUE))
                 return false;
         return true;
     }
