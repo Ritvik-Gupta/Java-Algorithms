@@ -21,7 +21,8 @@ class Solution {
         }
 
         for (int i = startNum; i < 10; ++i) {
-            if(left < i) break;
+            if (left < i)
+                break;
             combination.add(i);
             findValidCombinations(allCombinations, combination, i + 1, left - i, k);
             combination.remove(combination.size() - 1);
